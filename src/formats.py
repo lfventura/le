@@ -21,7 +21,19 @@ class FormatPlain(object):
     def format_line(self, line):
         return self._token + line
 
+class FormatHostname(object):
+    """Formats lines as Hostname + message, prepends each line with token."""
 
+    def __init__(self, hostname, token):
+        if hostname:
+            self._hostname = _sanitize_syslog_name(hostname)
+        else:
+            self._hostname = _sanitize_syslog_name(socket.gethostname())
+        self._token = token
+
+    def format_line(self, line):
+        return '%s %s %s'%(self._token, self._hostname, line)
+        
 class FormatSyslog(object):
     """Formats lines according to Syslog format RFC 5424. Hostname is taken
     from configuration or current hostname is used."""
@@ -72,6 +84,8 @@ def get_formatter(definition, hostname, log_name, log_token):
     # Check for known formatters
     if definition == 'plain':
         return FormatPlain(log_token).format_line
+    if definition == 'hostname':
+        return FormatHostname(hostname, log_token).format_line
     elif definition == 'syslog':
         return FormatSyslog(hostname, log_name, log_token).format_line
 
